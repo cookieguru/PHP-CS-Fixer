@@ -53,7 +53,7 @@ The ``--format`` option for the output format. Supported formats are ``@auto`` (
 Agent detection only applies when the format is resolved automatically (``@auto``); an explicitly selected format (for example, ``--format=txt``) is never overridden. When an AI agent is detected together with GitHub Actions or GitLab CI, the CI takes precedence and the format resolves to ``github`` or ``gitlab`` respectively.
 
 The ``github`` format prints `workflow commands <https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message>`_,
-which GitHub Actions turns into annotations on the files of a pull request. Use the ``--diff`` option as well: an annotation is then created for every group of changed lines of a file, pointing at those lines. Without ``--diff``, locations are not available and one file-level annotation is created for every applied rule. Which rule changed which lines is not known, so when several rules were applied to a file, all of them are listed in each annotation of that file.
+which GitHub Actions turns into annotations on the files of a pull request. An annotation is created for every range of lines that a rule changes, so each annotation names the rule responsible and points at the lines of the original file. GitHub shows an annotation that spans several lines on its last line, and keeps only the first 10 error annotations of a step.
 
 NOTE: the output for the following formats are generated in accordance with schemas
 

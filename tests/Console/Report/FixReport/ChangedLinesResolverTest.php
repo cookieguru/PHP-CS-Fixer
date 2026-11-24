@@ -30,57 +30,42 @@ use PHPUnit\Framework\Attributes\DataProvider;
 final class ChangedLinesResolverTest extends TestCase
 {
     /**
-     * @param list<array{begin: int, end: int}> $expected
+     * @param array{begin: int, end: int} $expected
      *
-     * @dataProvider provideResolveAllCases
+     * @dataProvider provideResolveCases
      */
-    #[DataProvider('provideResolveAllCases')]
-    public function testResolveAll(array $expected, string $diff): void
+    #[DataProvider('provideResolveCases')]
+    public function testResolve(array $expected, string $diff): void
     {
-        self::assertSame($expected, (new ChangedLinesResolver())->resolveAll($diff));
+        self::assertSame($expected, (new ChangedLinesResolver())->resolve($diff));
     }
 
     /**
-     * @return iterable<string, array{list<array{begin: int, end: int}>, string}>
+     * @return iterable<string, array{array{begin: int, end: int}, string}>
      */
-    public static function provideResolveAllCases(): iterable
+    public static function provideResolveCases(): iterable
     {
-        yield 'empty diff' => [[], ''];
+        yield 'empty diff' => [['begin' => 0, 'end' => 0], ''];
 
         yield 'replaced line' => [
-            [['begin' => 2, 'end' => 2]],
+            ['begin' => 5, 'end' => 9],
             <<<'DIFF'
                 --- Original
                 +++ New
-                @@ -1,3 +1,3 @@
-                 a
-                -b
-                +B
-                 c
+                @@ -2,7 +2,7 @@
+
+                 class Foo
+                 {
+                -    public function bar($foo = 1, $bar)
+                +    public function bar($foo, $bar)
+                     {
+                     }
+                 }
                 DIFF,
         ];
 
-        yield 'two groups in one chunk' => [
-            [['begin' => 2, 'end' => 2], ['begin' => 6, 'end' => 6]],
-            <<<'DIFF'
-                --- Original
-                +++ New
-                @@ -1,8 +1,8 @@
-                 a
-                -b
-                +B
-                 c
-                 d
-                 e
-                -f
-                +F
-                 g
-                 h
-                DIFF,
-        ];
-
-        yield 'groups in separate chunks' => [
-            [['begin' => 2, 'end' => 2], ['begin' => 21, 'end' => 21]],
+        yield 'only the first chunk is used' => [
+            ['begin' => 2, 'end' => 4],
             <<<'DIFF'
                 --- Original
                 +++ New
@@ -96,94 +81,5 @@ final class ChangedLinesResolverTest extends TestCase
                  z
                 DIFF,
         ];
-
-        yield 'multiple removed lines' => [
-            [['begin' => 2, 'end' => 3]],
-            <<<'DIFF'
-                --- Original
-                +++ New
-                @@ -1,5 +1,3 @@
-                 a
-                -b
-                -c
-                 d
-                 e
-                DIFF,
-        ];
-
-        yield 'pure insertion is reported at the line it was inserted before' => [
-            [['begin' => 3, 'end' => 3]],
-            <<<'DIFF'
-                --- Original
-                +++ New
-                @@ -1,3 +1,4 @@
-                 a
-                 b
-                +X
-                 c
-                DIFF,
-        ];
-
-        yield 'insertion at the end is reported at the last original line' => [
-            [['begin' => 2, 'end' => 2]],
-            <<<'DIFF'
-                --- Original
-                +++ New
-                @@ -1,2 +1,3 @@
-                 a
-                 b
-                +c
-                DIFF,
-        ];
-
-        yield 'the marker for a missing newline at the end of the file is not a line' => [
-            [['begin' => 5, 'end' => 5]],
-            <<<'DIFF'
-                --- Original
-                +++ New
-                @@ -2,4 +2,4 @@
-
-                 class NoNewline
-                 {
-                -}
-                \ No newline at end of file
-                +}
-                DIFF,
-        ];
-
-        yield 'added lines before removed lines stay in one group' => [
-            [['begin' => 2, 'end' => 3]],
-            <<<'DIFF'
-                --- Original
-                +++ New
-                @@ -1,4 +1,4 @@
-                 a
-                +X
-                -b
-                -c
-                +Y
-                 d
-                DIFF,
-        ];
-    }
-
-    public function testResolveStillReportsOnlyTheFirstChunk(): void
-    {
-        $diff = <<<'DIFF'
-            --- Original
-            +++ New
-            @@ -2,7 +2,7 @@
-
-             class Foo
-             {
-            -    public function bar($foo = 1, $bar)
-            +    public function bar($foo, $bar)
-                 {
-                 }
-             }
-            DIFF;
-
-        self::assertSame(['begin' => 5, 'end' => 9], (new ChangedLinesResolver())->resolve($diff));
-        self::assertSame([['begin' => 5, 'end' => 5]], (new ChangedLinesResolver())->resolveAll($diff));
     }
 }
