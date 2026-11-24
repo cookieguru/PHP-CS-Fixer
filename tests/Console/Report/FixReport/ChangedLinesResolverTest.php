@@ -180,6 +180,21 @@ final class ChangedLinesResolverTest extends TestCase
                 DIFF,
         ];
 
+        yield 'the marker for a missing newline at the end of the file is not a line' => [
+            ['begin' => 5, 'end' => 5],
+            <<<'DIFF'
+                --- Original
+                +++ New
+                @@ -2,4 +2,4 @@
+
+                 class NoNewline
+                 {
+                -}
+                \ No newline at end of file
+                +}
+                DIFF,
+        ];
+
         yield 'only the first chunk is used' => [
             ['begin' => 2, 'end' => 2],
             <<<'DIFF'
