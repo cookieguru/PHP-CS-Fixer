@@ -23,6 +23,7 @@ use PhpCsFixer\Console\Command\FixCommand;
 use PhpCsFixer\Console\ConfigurationResolver;
 use PhpCsFixer\Console\Output\Progress\ProgressOutputType;
 use PhpCsFixer\Console\Report\FixReport\CheckstyleReporter;
+use PhpCsFixer\Console\Report\FixReport\GithubReporter;
 use PhpCsFixer\Console\Report\FixReport\GitlabReporter;
 use PhpCsFixer\Console\Report\FixReport\JsonReporter;
 use PhpCsFixer\Console\Report\FixReport\TextReporter;
@@ -311,7 +312,7 @@ final class ConfigurationResolverTest extends TestCase
     public function testResolveConfigFileChooseFileWithInvalidFormat(): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessageMatches('/^The format "xls" is not defined, supported are "checkstyle", "gitlab", "json", "junit", "txt" and "xml"\.$/');
+        $this->expectExceptionMessageMatches('/^The format "xls" is not defined, supported are "checkstyle", "github", "gitlab", "json", "junit", "txt" and "xml"\.$/');
 
         $dirBase = self::getFixtureDir();
 
@@ -1567,6 +1568,21 @@ For more info about updating see: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/b
             [
                 'AI_AGENT' => 'true',
                 'GITLAB_CI' => 'true',
+            ],
+        ];
+
+        yield [
+            GithubReporter::class,
+            '@auto',
+            ['GITHUB_ACTIONS' => 'true'],
+        ];
+
+        yield [
+            GithubReporter::class,
+            '@auto',
+            [
+                'AI_AGENT' => 'true',
+                'GITHUB_ACTIONS' => 'true',
             ],
         ];
 
