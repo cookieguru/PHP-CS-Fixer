@@ -16,6 +16,6 @@ class PercentSign
 
     public function third($name)
     {
-        return 'Hello, '.$name.'!';
+        return 'Hello, ' . $name . '!';
     }
 }
