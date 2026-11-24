@@ -95,4 +95,107 @@ final class ChangedLinesResolverTest extends TestCase
                 DIFF,
         ];
     }
+
+    /**
+     * @param array{begin: int, end: int} $expected
+     *
+     * @dataProvider provideResolveFirstChunkChangesCases
+     */
+    #[DataProvider('provideResolveFirstChunkChangesCases')]
+    public function testResolveFirstChunkChanges(array $expected, string $diff): void
+    {
+        self::assertSame($expected, (new ChangedLinesResolver())->resolveFirstChunkChanges($diff));
+    }
+
+    /**
+     * @return iterable<string, array{array{begin: int, end: int}, string}>
+     */
+    public static function provideResolveFirstChunkChangesCases(): iterable
+    {
+        yield 'empty diff' => [['begin' => 0, 'end' => 0], ''];
+
+        yield 'replaced line' => [
+            ['begin' => 5, 'end' => 5],
+            <<<'DIFF'
+                --- Original
+                +++ New
+                @@ -2,7 +2,7 @@
+
+                 class Foo
+                 {
+                -    public function bar($foo = 1, $bar)
+                +    public function bar($foo, $bar)
+                     {
+                     }
+                 }
+                DIFF,
+        ];
+
+        yield 'removed lines are not extended by the context after them' => [
+            ['begin' => 3, 'end' => 5],
+            <<<'DIFF'
+                --- Original
+                +++ New
+                @@ -1,8 +1,5 @@
+                 <?php
+
+                -use Countable;
+                -use Iterator;
+                -use Stringable;
+
+                 class MultiLine
+                 {
+                DIFF,
+        ];
+
+        yield 'insertion' => [
+            ['begin' => 3, 'end' => 3],
+            <<<'DIFF'
+                --- Original
+                +++ New
+                @@ -1,3 +1,4 @@
+                 a
+                 b
+                +X
+                 c
+                DIFF,
+        ];
+
+        yield 'changes inside the first chunk are spanned' => [
+            ['begin' => 2, 'end' => 6],
+            <<<'DIFF'
+                --- Original
+                +++ New
+                @@ -1,8 +1,8 @@
+                 a
+                -b
+                +B
+                 c
+                 d
+                 e
+                -f
+                +F
+                 g
+                 h
+                DIFF,
+        ];
+
+        yield 'only the first chunk is used' => [
+            ['begin' => 2, 'end' => 2],
+            <<<'DIFF'
+                --- Original
+                +++ New
+                @@ -1,3 +1,3 @@
+                 a
+                -b
+                +B
+                 c
+                @@ -20,3 +20,3 @@
+                 x
+                -y
+                +Y
+                 z
+                DIFF,
+        ];
+    }
 }

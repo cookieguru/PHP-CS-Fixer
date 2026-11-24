@@ -69,7 +69,7 @@ final class GithubReporterTest extends AbstractReporterTestCase
 
     protected static function createSimpleReport(): string
     {
-        return '::error file=someFile.php,line=5,endLine=9,title=PHP-CS-Fixer.some_fixer_name_here::Found violation(s) of type: some_fixer_name_here';
+        return '::error file=someFile.php,line=5,title=PHP-CS-Fixer.some_fixer_name_here::Found violation(s) of type: some_fixer_name_here';
     }
 
     protected static function createWithDiffReport(): string
