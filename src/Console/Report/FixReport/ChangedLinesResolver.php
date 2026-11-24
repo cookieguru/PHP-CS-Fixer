@@ -99,6 +99,10 @@ final class ChangedLinesResolver
         foreach ($lines as $line) {
             $type = \Closure::bind(static fn (Line $line): int => $line->type, null, $line)($line);
 
+            if (self::isNoNewlineMarker($line)) {
+                continue;
+            }
+
             if (Line::UNCHANGED === $type) {
                 if (null !== $group) {
                     $groups[] = $group;
@@ -127,13 +131,26 @@ final class ChangedLinesResolver
             $groups[] = $group;
         }
 
-        return array_map(
-            static fn (array $group): array => [
-                'begin' => min($group['begin'], $lastOriginalLine),
-                'end' => min($group['end'], $lastOriginalLine),
-            ],
-            $groups,
-        );
+        return array_values(array_unique(
+            array_map(
+                static fn (array $group): array => [
+                    'begin' => min($group['begin'], $lastOriginalLine),
+                    'end' => min($group['end'], $lastOriginalLine),
+                ],
+                $groups,
+            ),
+            \SORT_REGULAR,
+        ));
+    }
+
+    /**
+     * The parser reports the "\ No newline at end of file" marker as an unchanged line, but it is not a line of the code.
+     */
+    private static function isNoNewlineMarker(Line $line): bool
+    {
+        $content = \Closure::bind(static fn (Line $line): string => $line->content, null, $line)($line);
+
+        return str_starts_with($content, '\ No newline at end of file');
     }
 
     /**
