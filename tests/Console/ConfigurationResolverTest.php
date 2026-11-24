@@ -1544,7 +1544,10 @@ For more info about updating see: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/b
         yield [
             TextReporter::class,
             '@auto',
-            ['GITLAB_CI' => ''],
+            [
+                'GITHUB_ACTIONS' => '',
+                'GITLAB_CI' => '',
+            ],
         ];
 
         yield [
@@ -1552,6 +1555,7 @@ For more info about updating see: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/b
             '@auto',
             [
                 'AI_AGENT' => 'true',
+                'GITHUB_ACTIONS' => '',
                 'GITLAB_CI' => '',
             ],
         ];
@@ -1574,7 +1578,10 @@ For more info about updating see: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/b
         yield [
             GithubReporter::class,
             '@auto',
-            ['GITHUB_ACTIONS' => 'true'],
+            [
+                'GITHUB_ACTIONS' => 'true',
+                'GITLAB_CI' => '',
+            ],
         ];
 
         yield [
@@ -1583,18 +1590,27 @@ For more info about updating see: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/b
             [
                 'AI_AGENT' => 'true',
                 'GITHUB_ACTIONS' => 'true',
+                'GITLAB_CI' => '',
             ],
         ];
 
         yield [
             JsonReporter::class,
             '@auto,json',
+            [
+                'GITHUB_ACTIONS' => '',
+                'GITLAB_CI' => '',
+            ],
         ];
 
         yield [
             JsonReporter::class,
             '@auto,json',
-            ['AI_AGENT' => 'true'],
+            [
+                'AI_AGENT' => 'true',
+                'GITHUB_ACTIONS' => '',
+                'GITLAB_CI' => '',
+            ],
         ];
     }
 
