@@ -40,16 +40,20 @@ PHP CS Fixer executes in parallel by default, utilising more CPU cores. You can 
         ->setParallelConfig(new PhpCsFixer\Runner\Parallel\ParallelConfig(4, 20))
     ;
 
-The ``--format`` option for the output format. Supported formats are ``@auto`` (default one on v4+), ``txt`` (default one on v3), ``checkstyle``, ``gitlab``, ``json``, ``junit`` and ``xml``.
+The ``--format`` option for the output format. Supported formats are ``@auto`` (default one on v4+), ``txt`` (default one on v3), ``checkstyle``, ``github``, ``gitlab``, ``json``, ``junit`` and ``xml``.
 
 * ``@auto`` aims to auto-select best reporter for given CI or local execution (resolution into best format is outside of BC promise and is future-ready)
 
+  * ``github`` when running in GitHub Actions
   * ``gitlab`` when running in GitLab CI
-  * best fit for the AI agent (currently: ``json``) when running in an AI agent (for example, when the ``AI_AGENT`` environment variable, or another popular one, is set), unless running in GitLab CI
+  * best fit for the AI agent (currently: ``json``) when running in an AI agent (for example, when the ``AI_AGENT`` environment variable, or another popular one, is set), unless running in GitHub Actions or GitLab CI
 
 * ``@auto,{format}`` takes ``@auto`` under CI, and {format} otherwise
 
-Agent detection only applies when the format is resolved automatically (``@auto``); an explicitly selected format (for example, ``--format=txt``) is never overridden. When both GitLab CI and an AI agent are detected, GitLab CI takes precedence and the format resolves to ``gitlab``.
+Agent detection only applies when the format is resolved automatically (``@auto``); an explicitly selected format (for example, ``--format=txt``) is never overridden. When an AI agent is detected together with GitHub Actions or GitLab CI, the CI takes precedence and the format resolves to ``github`` or ``gitlab`` respectively.
+
+The ``github`` format prints `workflow commands <https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message>`_,
+which GitHub Actions turns into annotations on the files of a pull request. Use the ``--diff`` option as well, so that annotations contain line numbers; otherwise they are reported on file level.
 
 NOTE: the output for the following formats are generated in accordance with schemas
 
