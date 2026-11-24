@@ -19,10 +19,9 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
 /**
  * Generates a report in the form of GitHub Actions workflow commands.
  *
- * One annotation is created for every contiguous group of changed lines of a file.
- * The diff does not tell which fixer changed which lines, so when more than one fixer was applied to a file,
- * all of them are listed in each annotation of that file.
- * Without a diff there are no locations, and one file-level annotation per applied fixer is created instead.
+ * One annotation is created for every range of lines changed by a rule, so that every annotation names the rule that
+ * changed those lines.  The ranges come from the `ruleChanges` of the result of the file, which the runner collects
+ * for this format.  Without them there are no locations, and one file-level annotation per applied rule is created.
  *
  * @see https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
  *
@@ -34,13 +33,6 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
  */
 final class GithubReporter implements ReporterInterface
 {
-    private ChangedLinesResolver $changedLinesResolver;
-
-    public function __construct()
-    {
-        $this->changedLinesResolver = new ChangedLinesResolver();
-    }
-
     public function getFormat(): string
     {
         return 'github';
@@ -51,19 +43,26 @@ final class GithubReporter implements ReporterInterface
         $commands = [];
 
         foreach ($reportSummary->getChanged() as $filePath => $fixResult) {
-            $appliedFixers = $fixResult['appliedFixers'];
-            $changedLines = $this->changedLinesResolver->resolveAll($fixResult['diff']);
+            $locations = [];
 
-            if ([] === $changedLines) {
-                foreach ($appliedFixers as $appliedFixer) {
-                    $commands[] = self::createCommand($filePath, null, [$appliedFixer]);
+            foreach ($fixResult['ruleChanges'] ?? [] as $rule => $ranges) {
+                foreach ($ranges as $range) {
+                    $locations[] = [$range, $rule];
+                }
+            }
+
+            if ([] === $locations) {
+                foreach ($fixResult['appliedFixers'] as $appliedFixer) {
+                    $commands[] = self::createCommand($filePath, null, $appliedFixer);
                 }
 
                 continue;
             }
 
-            foreach ($changedLines as $lines) {
-                $commands[] = self::createCommand($filePath, $lines, $appliedFixers);
+            usort($locations, static fn (array $a, array $b): int => [$a[0]['begin'], $a[0]['end'], $a[1]] <=> [$b[0]['begin'], $b[0]['end'], $b[1]]);
+
+            foreach ($locations as [$range, $rule]) {
+                $commands[] = self::createCommand($filePath, $range, (string) $rule);
             }
         }
 
@@ -74,9 +73,8 @@ final class GithubReporter implements ReporterInterface
 
     /**
      * @param null|array{begin: int, end: int} $lines
-     * @param list<string>                     $fixers
      */
-    private static function createCommand(string $filePath, ?array $lines, array $fixers): string
+    private static function createCommand(string $filePath, ?array $lines, string $rule): string
     {
         $properties = 'file='.self::escapeProperty($filePath);
 
@@ -87,13 +85,11 @@ final class GithubReporter implements ReporterInterface
             }
         }
 
-        $title = 1 === \count($fixers) ? 'PHP-CS-Fixer.'.$fixers[0] : 'PHP-CS-Fixer';
-
         return \sprintf(
             '::error %s,title=%s::%s',
             $properties,
-            self::escapeProperty($title),
-            self::escapeData('Found violation(s) of type: '.implode(', ', $fixers)),
+            self::escapeProperty('PHP-CS-Fixer.'.$rule),
+            self::escapeData('Found violation(s) of type: '.$rule),
         );
     }
 

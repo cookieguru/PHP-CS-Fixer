@@ -29,32 +29,26 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(GithubReporter::class)]
 final class GithubReporterTest extends AbstractReporterTestCase
 {
-    public function testGenerateCreatesOneAnnotationPerChangeGroup(): void
+    public function testGenerateCreatesOneAnnotationPerRangeOfEveryRule(): void
     {
-        $diff = <<<'DIFF'
-            --- Original
-            +++ New
-            @@ -1,8 +1,8 @@
-             a
-            -b
-            +B
-             c
-             d
-             e
-            -f
-            -g
-            +F
-            +G
-             h
-            @@ -20,3 +20,4 @@
-             x
-             y
-            +z
-             w
-            DIFF;
-
         $reportSummary = new ReportSummary(
-            ['someFile.php' => ['appliedFixers' => ['fixer_a'], 'diff' => $diff]],
+            [
+                'someFile.php' => [
+                    'appliedFixers' => ['fixer_a', 'fixer_b'],
+                    'diff' => '',
+                    'ruleChanges' => [
+                        'fixer_b' => [['begin' => 10, 'end' => 12]],
+                        'fixer_a' => [['begin' => 30, 'end' => 30], ['begin' => 2, 'end' => 2]],
+                    ],
+                ],
+                'anotherFile.php' => [
+                    'appliedFixers' => ['fixer_a'],
+                    'diff' => '',
+                    'ruleChanges' => [
+                        'fixer_a' => [['begin' => 5, 'end' => 5]],
+                    ],
+                ],
+            ],
             10,
             0,
             0,
@@ -66,27 +60,24 @@ final class GithubReporterTest extends AbstractReporterTestCase
         self::assertSame(
             <<<'TXT'
                 ::error file=someFile.php,line=2,title=PHP-CS-Fixer.fixer_a::Found violation(s) of type: fixer_a
-                ::error file=someFile.php,line=6,endLine=7,title=PHP-CS-Fixer.fixer_a::Found violation(s) of type: fixer_a
-                ::error file=someFile.php,line=22,title=PHP-CS-Fixer.fixer_a::Found violation(s) of type: fixer_a
+                ::error file=someFile.php,line=10,endLine=12,title=PHP-CS-Fixer.fixer_b::Found violation(s) of type: fixer_b
+                ::error file=someFile.php,line=30,title=PHP-CS-Fixer.fixer_a::Found violation(s) of type: fixer_a
+                ::error file=anotherFile.php,line=5,title=PHP-CS-Fixer.fixer_a::Found violation(s) of type: fixer_a
                 TXT,
             $this->reporter->generate($reportSummary),
         );
     }
 
-    public function testGenerateListsAllFixersWhenSeveralWereApplied(): void
+    public function testGenerateFallsBackToFileLevelAnnotationsWhenNoRuleHasRanges(): void
     {
-        $diff = <<<'DIFF'
-            --- Original
-            +++ New
-            @@ -1,3 +1,3 @@
-             a
-            -b
-            +B
-             c
-            DIFF;
-
         $reportSummary = new ReportSummary(
-            ['someFile.php' => ['appliedFixers' => ['fixer_a', 'fixer_b'], 'diff' => $diff]],
+            [
+                'someFile.php' => [
+                    'appliedFixers' => ['fixer_a', 'fixer_b'],
+                    'diff' => '',
+                    'ruleChanges' => [],
+                ],
+            ],
             10,
             0,
             0,
@@ -96,7 +87,10 @@ final class GithubReporterTest extends AbstractReporterTestCase
         );
 
         self::assertSame(
-            '::error file=someFile.php,line=2,title=PHP-CS-Fixer::Found violation(s) of type: fixer_a, fixer_b',
+            <<<'TXT'
+                ::error file=someFile.php,title=PHP-CS-Fixer.fixer_a::Found violation(s) of type: fixer_a
+                ::error file=someFile.php,title=PHP-CS-Fixer.fixer_b::Found violation(s) of type: fixer_b
+                TXT,
             $this->reporter->generate($reportSummary),
         );
     }
@@ -106,6 +100,13 @@ final class GithubReporterTest extends AbstractReporterTestCase
         $reportSummary = new ReportSummary(
             [
                 "dir/some,file:100%\n.php" => [
+                    'appliedFixers' => ['some_fixer_name_here'],
+                    'diff' => '',
+                    'ruleChanges' => [
+                        'some_fixer_name_here' => [['begin' => 3, 'end' => 3]],
+                    ],
+                ],
+                'other,file.php' => [
                     'appliedFixers' => ['some_fixer_name_here'],
                     'diff' => '',
                 ],
@@ -119,7 +120,10 @@ final class GithubReporterTest extends AbstractReporterTestCase
         );
 
         self::assertSame(
-            '::error file=dir/some%2Cfile%3A100%25%0A.php,title=PHP-CS-Fixer.some_fixer_name_here::Found violation(s) of type: some_fixer_name_here',
+            <<<'TXT'
+                ::error file=dir/some%2Cfile%3A100%25%0A.php,line=3,title=PHP-CS-Fixer.some_fixer_name_here::Found violation(s) of type: some_fixer_name_here
+                ::error file=other%2Cfile.php,title=PHP-CS-Fixer.some_fixer_name_here::Found violation(s) of type: some_fixer_name_here
+                TXT,
             $this->reporter->generate($reportSummary),
         );
     }
@@ -141,7 +145,7 @@ final class GithubReporterTest extends AbstractReporterTestCase
 
     protected static function createSimpleReport(): string
     {
-        return '::error file=someFile.php,line=5,title=PHP-CS-Fixer.some_fixer_name_here::Found violation(s) of type: some_fixer_name_here';
+        return '::error file=someFile.php,title=PHP-CS-Fixer.some_fixer_name_here::Found violation(s) of type: some_fixer_name_here';
     }
 
     protected static function createWithDiffReport(): string
