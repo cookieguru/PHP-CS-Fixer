@@ -114,7 +114,7 @@ return (new Config())
         (new Finder())
             ->in(__DIR__)
             ->append([__DIR__.'/php-cs-fixer'])
-            ->exclude(['demo', 'dev-tools/phpstan', 'tests/Fixtures'])
+            ->exclude(['demo', 'demo-scenarios', 'dev-tools/phpstan', 'tests/Fixtures'])
             ->ignoreDotFiles(false), // @TODO v4 line no longer needed
     )
 ;
