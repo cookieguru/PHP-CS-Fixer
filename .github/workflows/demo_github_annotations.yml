@@ -1,0 +1,73 @@
+name: Demo GitHub annotations
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  annotations:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: basic
+            path: demo
+            args: --diff --format=@auto
+          - name: no-diff
+            path: demo/OneMistake.php
+            args: --format=@auto
+          - name: explicit-format
+            path: demo-scenarios/cli/explicit-format
+            args: --diff --format=github
+          - name: not-in-github-actions
+            path: demo/OneMistake.php
+            args: --diff --format=@auto
+            env: GITHUB_ACTIONS=
+          - name: ansi
+            path: demo-scenarios/cli/ansi
+            args: --diff --format=@auto --ansi
+          - name: verbose
+            path: demo-scenarios/cli/verbose
+            args: --diff --format=@auto -vvv
+          - name: progress-dots
+            path: demo-scenarios/cli/progress-dots
+            args: --diff --format=@auto --show-progress=dots
+          - name: sequential
+            path: demo-scenarios/cli/sequential
+            args: --diff --format=@auto --sequential
+          - name: edge
+            path: demo-scenarios/edge
+            args: --diff --format=@auto
+          - name: paths
+            path: demo-scenarios/paths
+            args: --diff --format=@auto
+          - name: many
+            path: demo-scenarios/many
+            args: --diff --format=@auto
+          - name: new-file
+            path: demo-scenarios/newfile
+            args: --diff --format=@auto
+          - name: partial-overlap
+            path: demo-scenarios/partial
+            args: --diff --format=@auto
+          - name: rename-and-delete
+            path: demo-scenarios/fileops
+            args: --diff --format=@auto
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer
+
+      - run: composer install --no-interaction --no-progress --ignore-platform-reqs
+
+      - name: Check
+        continue-on-error: true
+        run: env ${{ matrix.env }} php php-cs-fixer check ${{ matrix.args }} --rules=@PSR12,no_unused_imports --path-mode=override '${{ matrix.path }}'
