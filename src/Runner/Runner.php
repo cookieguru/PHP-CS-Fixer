@@ -55,7 +55,9 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
- * @phpstan-type _RunResult array<string, array{appliedFixers: list<string>, diff: string}>
+ * @phpstan-type _RuleChanges array<string, list<array{begin: int, end: int}>>
+ * @phpstan-type _FixInfo array{appliedFixers: list<string>, diff: string, ruleChanges?: _RuleChanges}
+ * @phpstan-type _RunResult array<string, _FixInfo>
  *
  * @author Dariusz Rumiński <dariusz.ruminski@gmail.com>
  * @author Greg Korba <greg@codito.dev>
@@ -121,6 +123,8 @@ final class Runner
 
     private RuleCustomisationPolicyInterface $ruleCustomisationPolicy;
 
+    private bool $collectRuleChanges;
+
     /**
      * @param null|\Traversable<array-key, \SplFileInfo> $fileIterator
      * @param list<FixerInterface>                       $fixers
@@ -140,7 +144,8 @@ final class Runner
         ?ParallelConfig $parallelConfig = null,
         ?InputInterface $input = null,
         ?string $configFile = null,
-        ?RuleCustomisationPolicyInterface $ruleCustomisationPolicy = null
+        ?RuleCustomisationPolicyInterface $ruleCustomisationPolicy = null,
+        bool $collectRuleChanges = false
     ) {
         // Required only for main process (calculating workers count)
         $this->fileCount = null !== $fileIterator ? \count(iterator_to_array($fileIterator)) : 0;
@@ -168,6 +173,7 @@ final class Runner
         $this->input = $input;
         $this->configFile = $configFile;
         $this->ruleCustomisationPolicy = $ruleCustomisationPolicy ?? new NullRuleCustomisationPolicy();
+        $this->collectRuleChanges = $collectRuleChanges;
     }
 
     /**
@@ -390,6 +396,7 @@ final class Runner
                     $this->stopOnViolation,
                     $this->parallelConfig,
                     $this->configFile,
+                    $this->collectRuleChanges,
                 ),
                 $identifier,
                 $serverPort,
@@ -558,7 +565,7 @@ final class Runner
     }
 
     /**
-     * @return null|array{appliedFixers: list<string>, diff: string}
+     * @return null|_FixInfo
      */
     private function fixFile(\SplFileInfo $file, LintingResultInterface $lintingResult): ?array
     {
@@ -599,6 +606,7 @@ final class Runner
         $new = $old;
 
         $appliedFixers = [];
+        $ruleChangesTracker = $this->collectRuleChanges ? RuleChangesTracker::start($old) : null;
 
         $ruleCustomisers = $this->ruleCustomisationPolicy->getRuleCustomisers(); // were already validated
 
@@ -666,6 +674,9 @@ final class Runner
                     $tokens->clearEmptyTokens();
                     $tokens->clearChanged();
                     $appliedFixers[] = $fixer->getName();
+                    if (null !== $ruleChangesTracker) {
+                        $ruleChangesTracker = $ruleChangesTracker->withRule($fixer->getName(), $tokens->generateCode());
+                    }
                     if (filter_var(getenv('PHP_CS_FIXER_DEBUG'), \FILTER_VALIDATE_BOOL)) {
                         try {
                             $this->linter->lintSource($tokens->generateCode())->check();
@@ -707,6 +718,9 @@ final class Runner
                 'appliedFixers' => $appliedFixers,
                 'diff' => $this->differ->diff($old, $new, $file),
             ];
+            if (null !== $ruleChangesTracker) {
+                $fixInfo['ruleChanges'] = $ruleChangesTracker->resolve($new);
+            }
 
             try {
                 $this->linter->lintSource($new)->check();

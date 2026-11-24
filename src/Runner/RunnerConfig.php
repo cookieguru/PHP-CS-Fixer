@@ -31,17 +31,20 @@ final class RunnerConfig
     private bool $stopOnViolation;
     private ParallelConfig $parallelConfig;
     private ?string $configFile;
+    private bool $collectRuleChanges;
 
     public function __construct(
         bool $isDryRun,
         bool $stopOnViolation,
         ParallelConfig $parallelConfig,
-        ?string $configFile = null
+        ?string $configFile = null,
+        bool $collectRuleChanges = false
     ) {
         $this->isDryRun = $isDryRun;
         $this->stopOnViolation = $stopOnViolation;
         $this->parallelConfig = $parallelConfig;
         $this->configFile = $configFile;
+        $this->collectRuleChanges = $collectRuleChanges;
     }
 
     public function isDryRun(): bool
@@ -62,5 +65,10 @@ final class RunnerConfig
     public function getConfigFile(): ?string
     {
         return $this->configFile;
+    }
+
+    public function shouldCollectRuleChanges(): bool
+    {
+        return $this->collectRuleChanges;
     }
 }

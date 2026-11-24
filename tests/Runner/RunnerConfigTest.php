@@ -38,18 +38,20 @@ final class RunnerConfigTest extends TestCase
         bool $isDryRun,
         bool $stopOnViolation,
         ParallelConfig $parallelConfig,
-        ?string $configFile = null
+        ?string $configFile = null,
+        bool $collectRuleChanges = false
     ): void {
-        $config = new RunnerConfig($isDryRun, $stopOnViolation, $parallelConfig, $configFile);
+        $config = new RunnerConfig($isDryRun, $stopOnViolation, $parallelConfig, $configFile, $collectRuleChanges);
 
         self::assertSame($isDryRun, $config->isDryRun());
         self::assertSame($stopOnViolation, $config->shouldStopOnViolation());
         self::assertSame($parallelConfig, $config->getParallelConfig());
         self::assertSame($configFile, $config->getConfigFile());
+        self::assertSame($collectRuleChanges, $config->shouldCollectRuleChanges());
     }
 
     /**
-     * @return iterable<string, array{0: bool, 1: bool, 2: ParallelConfig, 3?: null|string}>
+     * @return iterable<string, array{0: bool, 1: bool, 2: ParallelConfig, 3?: null|string, 4?: bool}>
      */
     public static function provideGettersReturnCorrectDataCases(): iterable
     {
@@ -65,6 +67,14 @@ final class RunnerConfigTest extends TestCase
             false,
             new ParallelConfig(1, 2, 3),
             __DIR__.'/../../../.php-cs-fixer.dist.php',
+        ];
+
+        yield 'collecting changes of rules' => [
+            false,
+            false,
+            new ParallelConfig(1, 2, 3),
+            null,
+            true,
         ];
     }
 }

@@ -28,6 +28,7 @@ use PhpCsFixer\Config\RuleCustomisationPolicyInterface;
 use PhpCsFixer\ConfigInterface;
 use PhpCsFixer\ConfigurationException\InvalidConfigurationException;
 use PhpCsFixer\Console\Output\Progress\ProgressOutputType;
+use PhpCsFixer\Console\Report\FixReport\GithubReporter;
 use PhpCsFixer\Console\Report\FixReport\ReporterFactory;
 use PhpCsFixer\Console\Report\FixReport\ReporterInterface;
 use PhpCsFixer\CustomRulesetsAwareConfigInterface;
@@ -473,6 +474,14 @@ final class ConfigurationResolver
         }
 
         return $this->reporter;
+    }
+
+    /**
+     * Tells whether the runner has to collect the lines changed by every rule, because the reporter needs them.
+     */
+    public function shouldCollectRuleChanges(): bool
+    {
+        return $this->getReporter() instanceof GithubReporter;
     }
 
     public function getRiskyAllowed(): bool

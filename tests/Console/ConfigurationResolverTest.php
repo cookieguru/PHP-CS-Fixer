@@ -1615,6 +1615,33 @@ For more info about updating see: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/b
     }
 
     /**
+     * @dataProvider provideShouldCollectRuleChangesCases
+     */
+    #[DataProvider('provideShouldCollectRuleChangesCases')]
+    public function testShouldCollectRuleChanges(bool $expected, string $format): void
+    {
+        $resolver = $this->createConfigurationResolver(['format' => $format]);
+
+        self::assertSame($expected, $resolver->shouldCollectRuleChanges());
+    }
+
+    /**
+     * @return iterable<string, array{bool, string}>
+     */
+    public static function provideShouldCollectRuleChangesCases(): iterable
+    {
+        yield 'github' => [true, 'github'];
+
+        yield 'checkstyle' => [false, 'checkstyle'];
+
+        yield 'gitlab' => [false, 'gitlab'];
+
+        yield 'json' => [false, 'json'];
+
+        yield 'txt' => [false, 'txt'];
+    }
+
+    /**
      * @param non-empty-string $path
      *
      * @return non-empty-string

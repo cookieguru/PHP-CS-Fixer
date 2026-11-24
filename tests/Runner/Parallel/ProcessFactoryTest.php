@@ -163,6 +163,8 @@ final class ProcessFactoryTest extends TestCase
 
         yield 'stop-on-violation enabled' => [['--stop-on-violation' => true], self::createRunnerConfig(false), '--stop-on-violation'];
 
+        yield 'collecting changes of rules' => [[], self::createRunnerConfig(false, true), '--collect-rule-changes'];
+
         yield 'allow risky' => [
             ['--allow-risky' => 'yes'],
             self::createRunnerConfig(false),
@@ -225,8 +227,8 @@ final class ProcessFactoryTest extends TestCase
         ];
     }
 
-    private static function createRunnerConfig(bool $dryRun): RunnerConfig
+    private static function createRunnerConfig(bool $dryRun, bool $collectRuleChanges = false): RunnerConfig
     {
-        return new RunnerConfig($dryRun, false, ParallelConfigFactory::sequential());
+        return new RunnerConfig($dryRun, false, ParallelConfigFactory::sequential(), null, $collectRuleChanges);
     }
 }
