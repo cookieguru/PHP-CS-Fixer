@@ -91,6 +91,10 @@ final class ProcessFactory
             $commandArgs[] = '--stop-on-violation';
         }
 
+        if ($runnerConfig->shouldCollectRuleChanges()) {
+            $commandArgs[] = '--collect-rule-changes';
+        }
+
         foreach (['allow-risky', 'config', 'rules', 'using-cache', 'cache-file'] as $option) {
             $optionValue = $input->getOption($option);
 

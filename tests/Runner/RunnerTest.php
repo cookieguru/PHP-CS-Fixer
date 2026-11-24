@@ -34,10 +34,12 @@ use PhpCsFixer\Runner\Parallel\ParallelConfig;
 use PhpCsFixer\Runner\Runner;
 use PhpCsFixer\Tests\TestCase;
 use PhpCsFixer\ToolInfo;
+use PhpCsFixer\WhitespacesFixerConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 /**
@@ -52,6 +54,47 @@ use Symfony\Component\Finder\Finder;
 #[CoversClass(Runner::class)]
 final class RunnerTest extends TestCase
 {
+    /**
+     * @covers \PhpCsFixer\Runner\Runner::fix
+     * @covers \PhpCsFixer\Runner\Runner::fixFile
+     */
+    public function testThatRuleChangesAreCollectedOnlyWhenRequested(): void
+    {
+        $directory = sys_get_temp_dir().\DIRECTORY_SEPARATOR.'php-cs-fixer-rule-changes-'.bin2hex(random_bytes(4));
+        mkdir($directory);
+
+        try {
+            file_put_contents($directory.\DIRECTORY_SEPARATOR.'Sample.php', "<?php\nclass A\n{\n    public function f(\$a, \$b)\n    {\n        return \$a+\$b;\n    }\n}\n");
+
+            // the first rule adds a line, so the line of the change of the second one moves
+            $firstFixer = new Fixer\PhpTag\BlankLineAfterOpeningTagFixer();
+            $firstFixer->setWhitespacesConfig(new WhitespacesFixerConfig());
+            $secondFixer = new Fixer\Operator\BinaryOperatorSpacesFixer();
+            $secondFixer->configure([]);
+
+            $changedWithoutCollecting = $this->createRunnerForRuleChanges($directory, [$firstFixer, $secondFixer], false)->fix();
+            $changed = $this->createRunnerForRuleChanges($directory, [$firstFixer, $secondFixer], true)->fix();
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        self::assertCount(1, $changedWithoutCollecting);
+        self::assertSame(['appliedFixers' => ['blank_line_after_opening_tag', 'binary_operator_spaces'], 'diff' => ''], array_pop($changedWithoutCollecting));
+
+        self::assertCount(1, $changed);
+        self::assertSame(
+            [
+                'appliedFixers' => ['blank_line_after_opening_tag', 'binary_operator_spaces'],
+                'diff' => '',
+                'ruleChanges' => [
+                    'blank_line_after_opening_tag' => [['begin' => 1, 'end' => 1]],
+                    'binary_operator_spaces' => [['begin' => 6, 'end' => 6]],
+                ],
+            ],
+            array_pop($changed),
+        );
+    }
+
     /**
      * @covers \PhpCsFixer\Runner\Runner::fix
      * @covers \PhpCsFixer\Runner\Runner::fixFile
@@ -655,5 +698,29 @@ final class RunnerTest extends TestCase
         sort($fixedFiles, \SORT_STRING);
 
         return $fixedFiles;
+    }
+
+    /**
+     * @param list<FixerInterface> $fixers
+     */
+    private function createRunnerForRuleChanges(string $directory, array $fixers, bool $collectRuleChanges): Runner
+    {
+        return new Runner(
+            Finder::create()->in($directory),
+            $fixers,
+            new NullDiffer(),
+            null,
+            new ErrorsManager(),
+            $this->createLinterDouble(),
+            true,
+            new NullCacheManager(),
+            new Directory($directory),
+            false,
+            null,
+            null,
+            null,
+            null,
+            $collectRuleChanges,
+        );
     }
 }
