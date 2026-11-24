@@ -6,4 +6,7 @@ use Stringable;
 
 class MultiLine
 {
+    public function noop(): void
+    {
+    }
 }

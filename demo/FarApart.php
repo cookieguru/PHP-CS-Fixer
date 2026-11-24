@@ -24,6 +24,6 @@ class FarApart
 
     public function last($a, $b)
     {
-        return $a+$b;
+        return $a+$b+1;
     }
 }
