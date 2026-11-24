@@ -1,7 +1,7 @@
 <?php
 
 use Countable;
-use Iterator;
+use IteratorAggregate;
 use Stringable;
 
 class Partial
