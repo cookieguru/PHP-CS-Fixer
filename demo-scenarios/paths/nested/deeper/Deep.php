@@ -16,6 +16,6 @@ class Deep
 
     public function third($name)
     {
-        return 'Hello, '.$name.'!';
+        return 'Hello, ' . $name . '!';
     }
 }
