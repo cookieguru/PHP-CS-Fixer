@@ -46,10 +46,13 @@ final class GithubReporter implements ReporterInterface
         $commands = [];
 
         foreach ($reportSummary->getChanged() as $filePath => $fixResult) {
-            $lines = $this->changedLinesResolver->resolve($fixResult['diff']);
+            $lines = $this->changedLinesResolver->resolveFirstChunkChanges($fixResult['diff']);
             $location = 'file='.self::escapeProperty($filePath);
             if ($lines['begin'] > 0) {
-                $location .= \sprintf(',line=%d,endLine=%d', $lines['begin'], max($lines['begin'], $lines['end']));
+                $location .= ',line='.$lines['begin'];
+                if ($lines['end'] > $lines['begin']) {
+                    $location .= ',endLine='.$lines['end'];
+                }
             }
 
             foreach ($fixResult['appliedFixers'] as $appliedFixer) {
