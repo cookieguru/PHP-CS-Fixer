@@ -1,0 +1,30 @@
+name: Demo GitHub annotations
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  annotations:
+    name: Show annotations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer
+
+      - run: composer install --no-interaction --no-progress --ignore-platform-reqs
+
+      - name: Check all demo files, with locations
+        continue-on-error: true
+        run: php php-cs-fixer check --diff --format=@auto --rules=@PSR12,no_unused_imports --path-mode=override demo
+
+      - name: Check one demo file without --diff, without locations
+        continue-on-error: true
+        run: php php-cs-fixer check --format=@auto --rules=@PSR12,no_unused_imports --path-mode=override demo/OneMistake.php
