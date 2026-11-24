@@ -686,6 +686,12 @@ final class ConfigurationResolver
                     return $this->format;
                 }
 
+                if (filter_var(getenv('GITHUB_ACTIONS'), \FILTER_VALIDATE_BOOL)) {
+                    $this->format = 'github';
+
+                    return $this->format;
+                }
+
                 $agentDetector = new AgentDetector\Detector();
 
                 if ($agentDetector->isAgentPresent()) {

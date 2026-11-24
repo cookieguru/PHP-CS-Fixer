@@ -105,9 +105,10 @@ use Symfony\Component\Stopwatch\Stopwatch;
 
                 <info>$ php %command.full_name% --path-mode=intersection /path/to/dir_or_file</info>
 
-            The <comment>--format</comment> option for the output format. Supported formats are `@auto` (default one on v4+), `txt` (default one on v3), `json`, `xml`, `checkstyle`, `junit` and `gitlab`.
+            The <comment>--format</comment> option for the output format. Supported formats are `@auto` (default one on v4+), `txt` (default one on v3), `json`, `xml`, `checkstyle`, `junit`, `github` and `gitlab`.
 
             * `@auto` aims to auto-select best reporter for given CI or local execution (resolution into best format is outside of BC promise and is future-ready)
+              * `github` for GitHub Actions
               * `gitlab` for GitLab
             * `@auto,{format}` takes `@auto` under CI, and {format} otherwise
 
