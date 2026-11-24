@@ -22,23 +22,23 @@ jobs:
             path: demo/OneMistake.php
             args: --format=@auto
           - name: explicit-format
-            path: demo
+            path: demo-scenarios/cli/explicit-format
             args: --diff --format=github
           - name: not-in-github-actions
             path: demo/OneMistake.php
             args: --diff --format=@auto
             env: GITHUB_ACTIONS=
           - name: ansi
-            path: demo
+            path: demo-scenarios/cli/ansi
             args: --diff --format=@auto --ansi
           - name: verbose
-            path: demo
+            path: demo-scenarios/cli/verbose
             args: --diff --format=@auto -vvv
           - name: progress-dots
-            path: demo
+            path: demo-scenarios/cli/progress-dots
             args: --diff --format=@auto --show-progress=dots
           - name: sequential
-            path: demo
+            path: demo-scenarios/cli/sequential
             args: --diff --format=@auto --sequential
           - name: edge
             path: demo-scenarios/edge
