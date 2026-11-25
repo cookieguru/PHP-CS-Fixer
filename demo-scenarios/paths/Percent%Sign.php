@@ -1,6 +1,6 @@
 <?php
 
-class DeleteMe
+class PercentSign
 {
     public function first($a, $b)
     {
@@ -9,16 +9,13 @@ class DeleteMe
 
     public function second($items)
     {
-        $total = 0;
         foreach ($items as $item) {
-            $total += $item->price();
+            echo $item;
         }
-
-        return $total;
     }
 
     public function third($name)
     {
-        return strtoupper($name);
+        return 'Hello, ' . $name . '!';
     }
 }
