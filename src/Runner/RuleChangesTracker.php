@@ -153,7 +153,7 @@ final class RuleChangesTracker
         $entries = (new Differ(new StrictUnifiedDiffOutputBuilder(['fromFile' => 'Original', 'toFile' => 'New'])))->diffToArray($from, $to);
         $entries[] = ['', self::END_OF_CODE];
 
-        foreach ($entries as [$line, $type]) {
+        foreach ($entries as [, $type]) {
             if ($type > Differ::REMOVED) { // warnings about line endings, not lines of the code
                 continue;
             }
